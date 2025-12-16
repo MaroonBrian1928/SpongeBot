@@ -1,8 +1,55 @@
 {
   "quotes": [
     "I'm ready!",
+    "I'm ready, I'm ready!",
     "Is mayonnaise an instrument?",
-    "The inner machinations of my mind are an enigma."
+    "The inner machinations of my mind are an enigma.",
+    "F is for friends who do stuff together!",
+    "Ravioli, ravioli, give me the formuoli!",
+    "I'm ugly and I'm proud!",
+    "No, this is Patrick!",
+    "I wumbo, you wumbo, he, she, we wumbo.",
+    "The best time to wear a striped sweater is all the time.",
+    "I don't need it... I don't need it... I NEED IT!",
+    "Firmly grasp it!",
+    "Remember, licking doorknobs is illegal on other planets.",
+    "Future!",
+    "Too bad that didn't kill me.",
+    "I'm a Goofy Goober!",
+    "Chocolate!!!",
+    "Leedle leedle leedle lee.",
+    "Once upon a time there was an ugly barnacle.",
+    "This is not your average, everyday darkness.",
+    "East? I thought you said weast!",
+    "All hail the Magic Conch!",
+    "It's the Hash-Slinging Slasher!",
+    "I'm ready, promotion!",
+    "I'm not a Krusty Krab.",
+    "The pioneers used to ride these babies for miles.",
+    "I burned my hand! At night!",
+    "You like Krabby Patties, don't you Squidward?",
+    "Tartar sauce!",
+    "Patrick, don't you have to be stupid somewhere else?",
+    "The lid! The lid!",
+    "We're not cavemen, we have technology.",
+    "Set it to W for wombo.",
+    "Good-bye everyone, I'll remember you all in therapy!",
+    "Do you smell it? That smelly smell.",
+    "A bubble-blowing double baby doesn't belong in the Krusty Krab!",
+    "I love you, Krabby Patty.",
+    "Can I be excused for the rest of my life?",
+    "I can't see my forehead.",
+    "Indoors! Indoors!",
+    "You don't need a license to drive a sandwich.",
+    "We should take Bikini Bottom and push it somewhere else!",
+    "The Krusty Krab pizza is the pizza for you and me.",
+    "Gary, you are gonna finish your dessert and you are gonna like it!",
+    "It's a giraffe!",
+    "Well, it may be stupid, but it's also dumb.",
+    "Wumboing is first grade, SpongeBob!",
+    "Don't you dare take the name of Texas in vain!",
+    "The best there is, past, present, and future!",
+    "I order the food, you cook the food, the customer gets the food."
   ],
   "memes": [
     "https://i.ytimg.com/vi/AFRJsSaIaeo/maxresdefault.jpg",
@@ -11,5 +58,307 @@
   "trivia": [
     "SpongeBob SquarePants first aired on May 1, 1999.",
     "The character SpongeBob was created by marine science educator and animator Stephen Hillenburg."
+  ],
+  "trivia_questions": [
+    {
+      "question": "What is the name of SpongeBob's pet snail?",
+      "answer": "Gary",
+      "options": ["Gary", "Larry", "Spot", "Shelly"],
+      "explanation": "Gary the Snail meows like a cat and is SpongeBob's loyal companion."
+    },
+    {
+      "question": "What shape is SpongeBob's house?",
+      "answer": "A pineapple",
+      "options": ["A pineapple", "A boat", "A seashell", "A castle"],
+      "explanation": "SpongeBob famously lives in a pineapple under the sea."
+    },
+    {
+      "question": "Which underwater city do SpongeBob and his friends call home?",
+      "answer": "Bikini Bottom",
+      "options": ["Bikini Bottom", "Atlantis", "Rock Bottom", "Shell City"],
+      "explanation": "All of the show's adventures take place in Bikini Bottom."
+    },
+    {
+      "question": "Where does SpongeBob work?",
+      "answer": "The Krusty Krab",
+      "options": ["The Krusty Krab", "The Chum Bucket", "Weenie Hut Jr's", "The Salty Spitoon"],
+      "explanation": "SpongeBob is the dedicated fry cook of the Krusty Krab."
+    },
+    {
+      "question": "What is SpongeBob's job title at the Krusty Krab?",
+      "answer": "Fry cook",
+      "options": ["Fry cook", "Cashier", "Delivery driver", "Manager"],
+      "explanation": "He takes great pride in flipping Krabby Patties as the fry cook."
+    },
+    {
+      "question": "Who is SpongeBob's best friend?",
+      "answer": "Patrick Star",
+      "options": ["Patrick Star", "Squidward Tentacles", "Sandy Cheeks", "Larry the Lobster"],
+      "explanation": "Patrick Star is SpongeBob's cheerful best friend."
+    },
+    {
+      "question": "What instrument does Squidward play (poorly)?",
+      "answer": "Clarinet",
+      "options": ["Clarinet", "Trumpet", "Flute", "Trombone"],
+      "explanation": "Squidward constantly practices the clarinet, to everyone's dismay."
+    },
+    {
+      "question": "Who teaches SpongeBob at boating school?",
+      "answer": "Mrs. Puff",
+      "options": ["Mrs. Puff", "Mrs. Krabs", "Mrs. Shell", "Mrs. Waters"],
+      "explanation": "Mrs. Puff runs the boating school where SpongeBob keeps failing."
+    },
+    {
+      "question": "What beach hangout do Bikini Bottom residents enjoy?",
+      "answer": "Goo Lagoon",
+      "options": ["Goo Lagoon", "Lagoon Lagoon", "Bubble Beach", "Coral Cove"],
+      "explanation": "Goo Lagoon is the gooey beach where they play volleyball and sunbathe."
+    },
+    {
+      "question": "Which superhero duo does SpongeBob idolize?",
+      "answer": "Mermaid Man and Barnacle Boy",
+      "options": ["Mermaid Man and Barnacle Boy", "The Quickster and Elastic Waistband", "Aqua Lad and Sea Cow", "Captain Kelp and Sidekick"],
+      "explanation": "Mermaid Man and Barnacle Boy are the underwater heroes SpongeBob adores."
+    },
+    {
+      "question": "What kind of animal is Sandy Cheeks?",
+      "answer": "A squirrel",
+      "options": ["A squirrel", "A chipmunk", "A seal", "A rabbit"],
+      "explanation": "Sandy is a land squirrel who wears a diving suit underwater."
+    },
+    {
+      "question": "What is the name of Sandy's air-filled home?",
+      "answer": "The Treedome",
+      "options": ["The Treedome", "The Shell Dome", "Sandy's Shack", "Air Bubble"],
+      "explanation": "Sandy lives in the Treedome so she can breathe air and enjoy trees."
+    },
+    {
+      "question": "Where is Sandy originally from?",
+      "answer": "Texas",
+      "options": ["Texas", "Florida", "California", "Hawaii"],
+      "explanation": "Sandy proudly represents her home state of Texas."
+    },
+    {
+      "question": "What does Patrick live under?",
+      "answer": "A rock",
+      "options": ["A rock", "A boat", "A pineapple", "A tiki head"],
+      "explanation": "Patrick's house is literally a rock he lifts like a lid."
+    },
+    {
+      "question": "Who owns the Chum Bucket?",
+      "answer": "Sheldon J. Plankton",
+      "options": ["Sheldon J. Plankton", "Eugene H. Krabs", "Larry the Lobster", "Bubble Bass"],
+      "explanation": "Plankton runs the failing Chum Bucket across from the Krusty Krab."
+    },
+    {
+      "question": "What is Plankton always trying to steal?",
+      "answer": "The Krabby Patty secret formula",
+      "options": ["The Krabby Patty secret formula", "Mr. Krabs' money", "Sandy's inventions", "Pearl's shoes"],
+      "explanation": "Every scheme Plankton designs aims to grab the Krabby Patty recipe."
+    },
+    {
+      "question": "What is Mr. Krabs' daughter's name?",
+      "answer": "Pearl Krabs",
+      "options": ["Pearl Krabs", "Patty Krabs", "Shelly Krabs", "Paula Krabs"],
+      "explanation": "Pearl is the teenage whale daughter of Mr. Krabs."
+    },
+    {
+      "question": "What does Mr. Krabs value most?",
+      "answer": "Money",
+      "options": ["Money", "Art", "Poetry", "Boating"],
+      "explanation": "Mr. Krabs is notoriously obsessed with money."
+    },
+    {
+      "question": "What hobby do SpongeBob and Patrick enjoy using nets?",
+      "answer": "Jellyfishing",
+      "options": ["Jellyfishing", "Snorkeling", "Clam digging", "Surfing"],
+      "explanation": "They spend free time jellyfishing with nets in Jellyfish Fields."
+    },
+    {
+      "question": "Where do SpongeBob and Patrick catch jellyfish?",
+      "answer": "Jellyfish Fields",
+      "options": ["Jellyfish Fields", "Coral Canyon", "Lagoon Reef", "Barnacle Grove"],
+      "explanation": "Jellyfish Fields is the rolling meadow full of jellyfish."
+    },
+    {
+      "question": "What is the Krusty Krab's famous menu item?",
+      "answer": "Krabby Patty",
+      "options": ["Krabby Patty", "Chum Burger", "Kelp Dog", "Seaweed Wrap"],
+      "explanation": "Customers love the delicious Krabby Patty."
+    },
+    {
+      "question": "What is the name of SpongeBob's trusty jellyfishing net?",
+      "answer": "Ol' Reliable",
+      "options": ["Ol' Reliable", "Netty", "Jelly Catcher", "The Conqueror"],
+      "explanation": "SpongeBob proudly wields a net nicknamed Ol' Reliable."
+    },
+    {
+      "question": "Which spectral pirate sometimes haunts Bikini Bottom?",
+      "answer": "The Flying Dutchman",
+      "options": ["The Flying Dutchman", "Captain Clam", "Ghosty Ghost", "Sir Seaweed"],
+      "explanation": "The Flying Dutchman is the green ghost pirate with a ghostly ship."
+    },
+    {
+      "question": "Who rules the sea kingdom and occasionally visits Bikini Bottom?",
+      "answer": "King Neptune",
+      "options": ["King Neptune", "King Poseidon", "King Triton", "King Barnacle"],
+      "explanation": "King Neptune is the powerful sea monarch in the series."
+    },
+    {
+      "question": "Which spooky legend scares SpongeBob during the night shift?",
+      "answer": "The Hash-Slinging Slasher",
+      "options": ["The Hash-Slinging Slasher", "The Patty Phantom", "The Grill Ghoul", "The Kelp Creeper"],
+      "explanation": "The Hash-Slinging Slasher is the urban legend Squidward invents."
+    },
+    {
+      "question": "Who is SpongeBob's grumpy next-door neighbor?",
+      "answer": "Squidward Tentacles",
+      "options": ["Squidward Tentacles", "Bubble Bass", "Old Man Jenkins", "Kevin C. Cucumber"],
+      "explanation": "Squidward lives between SpongeBob and Patrick and dislikes their antics."
+    },
+    {
+      "question": "What type of structure does Squidward live in?",
+      "answer": "An Easter Island head",
+      "options": ["An Easter Island head", "A castle", "A lighthouse", "A submarine"],
+      "explanation": "Squidward's home is a stone tiki head resembling a Moai statue."
+    },
+    {
+      "question": "Who often serves as lifeguard at Goo Lagoon?",
+      "answer": "Larry the Lobster",
+      "options": ["Larry the Lobster", "Bubble Bass", "Kevin the Cucumber", "Perch Perkins"],
+      "explanation": "Larry is the muscular lobster lifeguard and bodybuilder."
+    },
+    {
+      "question": "What license does SpongeBob keep failing to earn?",
+      "answer": "His boating license",
+      "options": ["His boating license", "A pilot license", "A fishing license", "A bus pass"],
+      "explanation": "Despite many attempts, SpongeBob cannot pass his boating test."
+    },
+    {
+      "question": "What is the name of SpongeBob's living doodle duplicate?",
+      "answer": "DoodleBob",
+      "options": ["DoodleBob", "SketchBob", "ScribblePants", "PaperBob"],
+      "explanation": "DoodleBob is the pencil-drawn version of SpongeBob."
+    },
+    {
+      "question": "What bubble creation becomes SpongeBob's short-lived friend?",
+      "answer": "Bubble Buddy",
+      "options": ["Bubble Buddy", "Bubble Pal", "Bubble Dude", "Bubble Bro"],
+      "explanation": "Bubble Buddy is the bubble person SpongeBob creates on Leif Erikson Day."
+    },
+    {
+      "question": "What is the name of the seahorse SpongeBob briefly keeps as a pet?",
+      "answer": "Mystery",
+      "options": ["Mystery", "Bubbles", "Seabiscuit", "Coral"],
+      "explanation": "SpongeBob names the wild seahorse Mystery after finding her."
+    },
+    {
+      "question": "What glove-themed amusement park do SpongeBob and Patrick love?",
+      "answer": "Glove World!",
+      "options": ["Glove World!", "Glove Galaxy", "Glove Planet", "Glove Kingdom"],
+      "explanation": "Glove World! features glove-themed rides and souvenirs."
+    },
+    {
+      "question": "What tough hangout refuses SpongeBob entry for not being tough enough?",
+      "answer": "The Salty Spitoon",
+      "options": ["The Salty Spitoon", "The Rusty Reef", "The Shady Shoal", "The Gritty Grotto"],
+      "explanation": "The Salty Spitoon only allows the toughest fish inside."
+    },
+    {
+      "question": "Where do SpongeBob and Patrick end up instead of the Salty Spitoon?",
+      "answer": "Weenie Hut Jr's",
+      "options": ["Weenie Hut Jr's", "Kelp Shake", "The Fancy!", "Goo Lagoon Cafe"],
+      "explanation": "Because they aren't tough, they go to Weenie Hut Jr's instead."
+    },
+    {
+      "question": "What mystical shell gives SpongeBob and Patrick cryptic advice?",
+      "answer": "The Magic Conch Shell",
+      "options": ["The Magic Conch Shell", "The Golden Shell", "The Wish Shell", "The Oracle Shell"],
+      "explanation": "The Magic Conch Shell tells them what to do in the kelp forest."
+    },
+    {
+      "question": "What is the name of Plankton's sentient computer wife?",
+      "answer": "Karen",
+      "options": ["Karen", "Sarah", "Linda", "Betty"],
+      "explanation": "Karen is the talking computer who helps Plankton scheme."
+    },
+    {
+      "question": "Which SquarePants cousin briefly works at the Krusty Krab?",
+      "answer": "Stanley SquarePants",
+      "options": ["Stanley SquarePants", "Todd SquarePants", "Billy SquarePants", "Reggie SquarePants"],
+      "explanation": "Stanley SquarePants is SpongeBob's clumsy cousin."
+    },
+    {
+      "question": "What athletic competition do SpongeBob and Patrick enter on opposite teams?",
+      "answer": "The Fry Cook Games",
+      "options": ["The Fry Cook Games", "The Goo Lagoon Games", "The Kelp Olympics", "The Bikini Bottom Bash"],
+      "explanation": "They become rivals during the Fry Cook Games."
+    },
+    {
+      "question": "What treat do SpongeBob and Patrick sell door-to-door?",
+      "answer": "Chocolate bars",
+      "options": ["Chocolate bars", "Kelp shakes", "Cookies", "Seaweed chips"],
+      "explanation": "They attempt to get rich selling chocolate bars."
+    },
+    {
+      "question": "What is SpongeBob's street address?",
+      "answer": "124 Conch Street",
+      "options": ["124 Conch Street", "12 Shell Avenue", "24 Coral Lane", "421 Kelp Road"],
+      "explanation": "His driver's license lists 124 Conch Street, Bikini Bottom."
+    },
+    {
+      "question": "What do SpongeBob and Squidward deliver during their famous night shift?",
+      "answer": "The Krusty Krab Pizza",
+      "options": ["The Krusty Krab Pizza", "Kelp shakes", "Coral bits", "Chum Nuggets"],
+      "explanation": "Mr. Krabs adds delivery, so they bring a Krusty Krab Pizza."
+    },
+    {
+      "question": "What exclamation does SpongeBob shout when things go wrong?",
+      "answer": "Tartar sauce!",
+      "options": ["Tartar sauce!", "Barnacles!", "Sea cucumbers!", "Fish paste!"],
+      "explanation": "\"Tartar sauce!\" is SpongeBob's go-to frustrated phrase."
+    },
+    {
+      "question": "What song does SpongeBob perform at the Bubble Bowl?",
+      "answer": "Sweet Victory",
+      "options": ["Sweet Victory", "Goofy Goober Rock", "Living in the Sunlight", "Best Day Ever"],
+      "explanation": "He belts out \"Sweet Victory\" with Squidward's band."
+    },
+    {
+      "question": "What superhero alter ego does SpongeBob adopt in Mermaid Man and Barnacle Boy V?",
+      "answer": "The Quickster",
+      "options": ["The Quickster", "Captain Yellow", "The Blur", "Mighty Sponge"],
+      "explanation": "SpongeBob becomes The Quickster with super speed."
+    },
+    {
+      "question": "What superhero name does Patrick take in the same episode?",
+      "answer": "The Elastic Waistband",
+      "options": ["The Elastic Waistband", "Sir Stretch", "Captain Pink", "Star Stretch"],
+      "explanation": "Patrick becomes The Elastic Waistband with stretch powers."
+    },
+    {
+      "question": "Who is Mermaid Man's arch-nemesis?",
+      "answer": "Man Ray",
+      "options": ["Man Ray", "Dirty Bubble", "Atomic Flounder", "Captain Squid"],
+      "explanation": "Man Ray is the villain trapped in ice by Mermaid Man."
+    },
+    {
+      "question": "What is the name of Plankton's pet amoeba?",
+      "answer": "Spot",
+      "options": ["Spot", "Dot", "Blob", "Goo"],
+      "explanation": "Spot is the little amoeba Plankton keeps as a pet."
+    },
+    {
+      "question": "What training film does new Krusty Krab staff watch?",
+      "answer": "The Krusty Krab Training Video",
+      "options": ["The Krusty Krab Training Video", "The Patty Primer", "The Fry Cook Film", "The Krabby Manual"],
+      "explanation": "The hilarious Krusty Krab Training Video introduces new hires."
+    },
+    {
+      "question": "What award does SpongeBob proudly win hundreds of times?",
+      "answer": "Employee of the Month",
+      "options": ["Employee of the Month", "Best Neighbor", "Top Jellyfisher", "Fastest Fry Cook"],
+      "explanation": "Mr. Krabs posts SpongeBob as Employee of the Month over and over."
+    }
   ]
 }
