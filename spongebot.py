@@ -136,8 +136,8 @@ async def on_ready():
 
     print(f"Logged in as {client.user} (id={client.user.id})")
 
-@tree.command(name="spongebob", description="Send a SpongeBob meme and/or quote.")
-@app_commands.describe(kind="What to send: trivia, meme, or quote")
+@tree.command(name="spongebob", description="Send a SpongeBob-themed message")
+@app_commands.describe(kind="What to send: trivia, meme, quote, spongebot, karate, spongebob")
 @app_commands.choices(kind=[
     app_commands.Choice(name="trivia", value="trivia"),
     app_commands.Choice(name="meme", value="meme"),
