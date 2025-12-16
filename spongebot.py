@@ -30,6 +30,15 @@ def pick_meme_url() -> str:
 def pick_trivia_fact() -> str:
     return random.choice(DATA["trivia"])
 
+def pick_spongebot_gif() -> str:
+    return DATA.get("spongebot")
+
+def pick_karate_gif() -> str:
+    return DATA.get("karate")
+
+def pick_spongebob_gif() -> str:
+    return DATA.get("spongebob")
+
 def pick_trivia_question() -> dict | None:
     questions = DATA.get("trivia_questions") or []
     if not questions:
@@ -133,6 +142,10 @@ async def on_ready():
     app_commands.Choice(name="trivia", value="trivia"),
     app_commands.Choice(name="meme", value="meme"),
     app_commands.Choice(name="quote", value="quote"),
+    app_commands.Choice(name="spongebot", value="spongebot"),
+    app_commands.Choice(name="karate", value="karate"),
+    app_commands.Choice(name="spongebob", value="spongebob"),
+    
 ])
 async def spongebob(interaction: discord.Interaction, kind: app_commands.Choice[str]):
     kind_val = kind.value if kind else "both"
@@ -143,6 +156,19 @@ async def spongebob(interaction: discord.Interaction, kind: app_commands.Choice[
 
     if kind_val == "meme":
         await interaction.response.send_message(pick_meme_url())
+        return
+    
+    if kind_val == "spongebot":
+        await interaction.response.send_message(pick_spongebot_gif())
+        return
+    
+    if kind_val == "karate":
+        await interaction.response.send_message("HI YAH!")
+        await interaction.response.send_message(pick_karate_gif())
+        return
+    
+    if kind_val == "spongebob":
+        await interaction.response.send_message(pick_spongebob_gif())
         return
     
     if kind_val == "trivia":
