@@ -1,0 +1,13 @@
+services:
+  spongebot:
+    build: .
+    container_name: spongebot
+    env_file:
+      - .env
+    restart: unless-stopped
+    # optional: keep logs bounded
+    logging:
+      driver: "json-file"
+      options:
+        max-size: "10m"
+        max-file: "3"
