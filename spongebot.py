@@ -164,7 +164,7 @@ async def spongebob(interaction: discord.Interaction, kind: app_commands.Choice[
     
     if kind_val == "karate":
         await interaction.response.send_message("HI YAH!")
-        await interaction.response.send_message(pick_karate_gif())
+        await interaction.followup.send(pick_karate_gif())
         return
     
     if kind_val == "spongebob":
