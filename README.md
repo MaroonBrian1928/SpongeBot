@@ -14,8 +14,8 @@ rounds directly inside your server.
 - **Interactive Trivia** – Selecting the `trivia` option posts a multiple-choice
   prompt with Discord buttons so only the command invoker can answer while
   everyone sees the result.
-- **Magic Conch & Text Generators** – Ask the Magic Conch for advice or use
-  `mocktext`/`wumbo` to mOcK or flip any text.
+- **Magic Conch & Text Generators** – Ask the Magic Conch for advice (with an
+  “Ask Again” button) or use `mocktext`/`wumbo` to mOcK or flip any text.
 - **JSON-driven content** – All quotes, memes, and trivia questions live in
   `spongebob_content.json`, making it simple to add or edit material without
   touching Python code.
@@ -56,9 +56,11 @@ In Discord, type `/spongebob` and choose one of the available options:
 - `quote` – Random SpongeBob quote.
 - `meme` – Random meme/GIF URL from the `memes` list.
 - `spongebot`, `karate`, `spongebob`, `magic_conch` – Specific GIFs tied to those
-  JSON keys (Magic Conch also replies with a random response).
+  JSON keys (Magic Conch also replies with a random response and provides an “Ask
+  Again” button).
 - `mocktext`, `wumbo` – Transform provided text into mocking case or upside-down
   “wumbo” text.
+- `fun` – Posts the classic F.U.N. song lines with a themed GIF.
 - `trivia` – Interactive multiple-choice trivia card.
 
 If you do not pick an option, nothing is sent (the command requires a choice).

@@ -39,6 +39,9 @@ def pick_karate_gif() -> str:
 def pick_spongebob_gif() -> str:
     return DATA.get("spongebob")
 
+def pick_fun_gif() -> str:
+    return DATA.get("fun")
+
 def pick_trivia_question() -> dict | None:
     questions = DATA.get("trivia_questions") or []
     if not questions:
@@ -158,6 +161,31 @@ class TriviaView(View):
                     else discord.ButtonStyle.danger
                 )
 
+
+class MagicConchView(View):
+    def __init__(self, question: str | None):
+        super().__init__(timeout=120)
+        self.question = question
+
+    def build_embed(self) -> discord.Embed:
+        question_line = f"**Question:** {self.question}\n\n" if self.question else ""
+        description = (
+            f"{question_line}The Magic Conch Shell says: {pick_magic_conch_response()}"
+        )
+        embed = discord.Embed(description=description)
+        gif_url = pick_magic_conch_gif()
+        if gif_url:
+            embed.set_image(url=gif_url)
+        return embed
+
+    @discord.ui.button(label="Ask Again", style=discord.ButtonStyle.primary)
+    async def ask_again(
+        self,
+        interaction: discord.Interaction,
+        button: Button,
+    ):
+        await interaction.response.edit_message(embed=self.build_embed(), view=self)
+
 @client.event
 async def on_ready():
     # Sync commands to one guild for fast iteration
@@ -227,11 +255,8 @@ async def spongebob(
         return
 
     if kind_val == "magic_conch":
-        question_line = f"**Question:** {text}\n" if text else ""
-        await interaction.response.send_message(pick_magic_conch_gif())
-        await interaction.followup.send(
-            f"{question_line}The Magic Conch Shell says: {pick_magic_conch_response()}"
-        )
+        view = MagicConchView(text)
+        await interaction.response.send_message(embed=view.build_embed(), view=view)
         return
     
     if kind_val == "wumbo":
@@ -256,6 +281,22 @@ async def spongebob(
         view = TriviaView(question, interaction.user)
         await interaction.response.send_message(view.prompt, view=view)
         return
+
+
+@tree.command(name="fun", description="Remind Bikini Bottom how to have F.U.N.")
+async def fun(interaction: discord.Interaction):
+    embed = discord.Embed(
+        description=(
+            "F is for friends who do stuff together\n"
+            "U is for you and me\n"
+            "N is for anywhere at any time at all"
+        )
+    )
+    gif_url = pick_fun_gif()
+    if gif_url:
+        embed.set_image(url=gif_url)
+
+    await interaction.response.send_message(embed=embed)
 
 if not TOKEN:
     raise SystemExit("Missing DISCORD_TOKEN in .env")
