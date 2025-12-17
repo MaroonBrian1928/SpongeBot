@@ -1,9 +1,9 @@
 # SpongeBot
 
-SpongeBot is a lightweight Discord bot that responds to a single slash command,
-`/spongebob`, and delivers SpongeBob-themed fun. The command supports several
-options so you can drop memes, quotes, GIFs, and even run interactive trivia
-rounds directly inside your server.
+SpongeBot is a lightweight Discord bot that exposes a set of SpongeBob-themed
+slash commands—centered around `/spongebob` plus `/mocktext` and `/wumbo`. These
+commands let you drop memes, quotes, GIFs, and interactive trivia rounds
+directly inside your server.
 
 ## Features
 
@@ -43,11 +43,17 @@ rounds directly inside your server.
 
 ## Docker
 
-You can also build and run the bot via Docker:
+Clone the repo locally, then build and run the bot via Docker:
 
 ```bash
 docker build -t spongebot .
 docker run --env-file .env spongebot
+```
+
+Or use docker compose with the provided `docker-compose.yml`:
+
+```bash
+docker compose up -d --build
 ```
 
 ## Usage
