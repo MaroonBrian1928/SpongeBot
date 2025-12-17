@@ -163,7 +163,7 @@ class TriviaView(View):
 
 
 class MagicConchView(View):
-    def __init__(self, question: str | None):
+    def __init__(self, question: str | None = None):
         super().__init__(timeout=120)
         self.question = question
 
@@ -202,8 +202,7 @@ async def on_ready():
 
 @tree.command(name="spongebob", description="Send a SpongeBob-themed message")
 @app_commands.describe(
-    kind="What to send: trivia, meme, quote, gif, mocktext, wumbo, or ask the Magic Conch",
-    text="Text to mock/wumbo or a question for the Magic Conch"
+    kind="What to send: trivia, meme, quote, gif, fun, or ask the Magic Conch"
 )
 @app_commands.choices(kind=[
     app_commands.Choice(name="trivia", value="trivia"),
@@ -212,14 +211,12 @@ async def on_ready():
     app_commands.Choice(name="spongebot", value="spongebot"),
     app_commands.Choice(name="karate", value="karate"),
     app_commands.Choice(name="spongebob", value="spongebob"),
-    app_commands.Choice(name="mocktext", value="mocktext"),
     app_commands.Choice(name="magic_conch", value="magic_conch"),
-    app_commands.Choice(name="wumbo", value="wumbo"),
+    app_commands.Choice(name="fun", value="fun"),
 ])
 async def spongebob(
     interaction: discord.Interaction,
     kind: app_commands.Choice[str],
-    text: str | None = None,
 ):
     kind_val = kind.value if kind else "both"
 
@@ -244,29 +241,23 @@ async def spongebob(
         await interaction.response.send_message(pick_spongebob_gif())
         return
 
-    if kind_val == "mocktext":
-        if not text:
-            await interaction.response.send_message(
-                "Provide some text using the `text` option so I can mock it.",
-                ephemeral=True,
-            )
-            return
-        await interaction.response.send_message(mock_text(text))
-        return
-
     if kind_val == "magic_conch":
-        view = MagicConchView(text)
+        view = MagicConchView()
         await interaction.response.send_message(embed=view.build_embed(), view=view)
         return
     
-    if kind_val == "wumbo":
-        if not text:
-            await interaction.response.send_message(
-                "Provide some text using the `text` option so I can wumbo it.",
-                ephemeral=True,
+    if kind_val == "fun":
+        embed = discord.Embed(
+            description=(
+                "F is for friends who do stuff together\n"
+                "U is for you and me\n"
+                "N is for anywhere at any time at all"
             )
-            return
-        await interaction.response.send_message(wumbo_text(text))
+        )
+        gif_url = pick_fun_gif()
+        if gif_url:
+            embed.set_image(url=gif_url)
+        await interaction.response.send_message(embed=embed)
         return
     
     if kind_val == "trivia":
@@ -283,20 +274,16 @@ async def spongebob(
         return
 
 
-@tree.command(name="fun", description="Remind Bikini Bottom how to have F.U.N.")
-async def fun(interaction: discord.Interaction):
-    embed = discord.Embed(
-        description=(
-            "F is for friends who do stuff together\n"
-            "U is for you and me\n"
-            "N is for anywhere at any time at all"
-        )
-    )
-    gif_url = pick_fun_gif()
-    if gif_url:
-        embed.set_image(url=gif_url)
+@tree.command(name="mocktext", description="Send text back in SpongeBob mocking case")
+@app_commands.describe(text="The text you want SpongeBob to mock")
+async def mocktext(interaction: discord.Interaction, text: str):
+    await interaction.response.send_message(mock_text(text))
 
-    await interaction.response.send_message(embed=embed)
+
+@tree.command(name="wumbo", description="Flip text upside down because we wumbo")
+@app_commands.describe(text="The text you want to wumbo")
+async def wumbo(interaction: discord.Interaction, text: str):
+    await interaction.response.send_message(wumbo_text(text))
 
 if not TOKEN:
     raise SystemExit("Missing DISCORD_TOKEN in .env")
