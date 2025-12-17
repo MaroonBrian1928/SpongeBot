@@ -45,6 +45,42 @@ def pick_trivia_question() -> dict | None:
         return None
     return random.choice(questions)
 
+def pick_magic_conch_gif() -> str:
+    return DATA.get("magic_conch")
+
+def pick_magic_conch_response() -> str:
+    responses = DATA.get("magic_conch_responses") or []
+    return random.choice(responses)
+
+def mock_text(value: str) -> str:
+    mocked = []
+    for char in value:
+        if char.isalpha():
+            mocked.append(char.upper() if random.choice([True, False]) else char.lower())
+        else:
+            mocked.append(char)
+    return "".join(mocked)
+
+WUMBO_TRANSLATION = str.maketrans({
+    "a": "ɐ", "b": "q", "c": "ɔ", "d": "p", "e": "ǝ", "f": "ɟ", "g": "ƃ",
+    "h": "ɥ", "i": "ᴉ", "j": "ɾ", "k": "ʞ", "l": "ʃ", "m": "ɯ", "n": "u",
+    "o": "o", "p": "d", "q": "b", "r": "ɹ", "s": "s", "t": "ʇ", "u": "n",
+    "v": "ʌ", "w": "ʍ", "x": "x", "y": "ʎ", "z": "z",
+    "A": "∀", "B": "𐐒", "C": "Ɔ", "D": "p", "E": "Ǝ", "F": "Ⅎ", "G": "פ",
+    "H": "H", "I": "I", "J": "ſ", "K": "ʞ", "L": "˥", "M": "W", "N": "N",
+    "O": "O", "P": "Ԁ", "Q": "Ό", "R": "ᴚ", "S": "S", "T": "┴", "U": "∩",
+    "V": "Λ", "W": "M", "X": "X", "Y": "⅄", "Z": "Z",
+    "0": "0", "1": "Ɩ", "2": "ᄅ", "3": "Ɛ", "4": "ㄣ", "5": "ϛ",
+    "6": "9", "7": "ㄥ", "8": "8", "9": "6",
+    ".": "˙", ",": "'", "'": ",", "\"": ",,", "?": "¿", "!": "¡",
+    "(": ")", ")": "(", "[": "]", "]": "[", "{": "}", "}": "{",
+    "<": ">", ">": "<", "_": "‾", "&": "⅋"
+})
+
+def wumbo_text(value: str) -> str:
+    flipped = value.translate(WUMBO_TRANSLATION)
+    return flipped[::-1]
+
 
 class TriviaButton(Button):
     def __init__(self, label: str, is_correct: bool):
@@ -137,7 +173,10 @@ async def on_ready():
     print(f"Logged in as {client.user} (id={client.user.id})")
 
 @tree.command(name="spongebob", description="Send a SpongeBob-themed message")
-@app_commands.describe(kind="What to send: trivia, meme, quote, spongebot, karate, spongebob")
+@app_commands.describe(
+    kind="What to send: trivia, meme, quote, gif, mocktext, wumbo, or ask the Magic Conch",
+    text="Text to mock/wumbo or a question for the Magic Conch"
+)
 @app_commands.choices(kind=[
     app_commands.Choice(name="trivia", value="trivia"),
     app_commands.Choice(name="meme", value="meme"),
@@ -145,9 +184,15 @@ async def on_ready():
     app_commands.Choice(name="spongebot", value="spongebot"),
     app_commands.Choice(name="karate", value="karate"),
     app_commands.Choice(name="spongebob", value="spongebob"),
-    
+    app_commands.Choice(name="mocktext", value="mocktext"),
+    app_commands.Choice(name="magic_conch", value="magic_conch"),
+    app_commands.Choice(name="wumbo", value="wumbo"),
 ])
-async def spongebob(interaction: discord.Interaction, kind: app_commands.Choice[str]):
+async def spongebob(
+    interaction: discord.Interaction,
+    kind: app_commands.Choice[str],
+    text: str | None = None,
+):
     kind_val = kind.value if kind else "both"
 
     if kind_val == "quote":
@@ -169,6 +214,34 @@ async def spongebob(interaction: discord.Interaction, kind: app_commands.Choice[
     
     if kind_val == "spongebob":
         await interaction.response.send_message(pick_spongebob_gif())
+        return
+
+    if kind_val == "mocktext":
+        if not text:
+            await interaction.response.send_message(
+                "Provide some text using the `text` option so I can mock it.",
+                ephemeral=True,
+            )
+            return
+        await interaction.response.send_message(mock_text(text))
+        return
+
+    if kind_val == "magic_conch":
+        question_line = f"**Question:** {text}\n" if text else ""
+        await interaction.response.send_message(pick_magic_conch_gif())
+        await interaction.followup.send(
+            f"{question_line}The Magic Conch Shell says: {pick_magic_conch_response()}"
+        )
+        return
+    
+    if kind_val == "wumbo":
+        if not text:
+            await interaction.response.send_message(
+                "Provide some text using the `text` option so I can wumbo it.",
+                ephemeral=True,
+            )
+            return
+        await interaction.response.send_message(wumbo_text(text))
         return
     
     if kind_val == "trivia":
