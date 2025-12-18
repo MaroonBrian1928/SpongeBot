@@ -1,0 +1,9 @@
+__pycache__/
+*.py[cod]
+*.env
+.env
+.git
+README.md
+sample.env
+spongebot_content.json
+docker-compose.yml
