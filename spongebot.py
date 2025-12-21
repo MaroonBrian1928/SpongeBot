@@ -8,8 +8,12 @@ from dotenv import load_dotenv
 
 load_dotenv()
 
-TOKEN = os.getenv("DISCORD_TOKEN")
-GUILD_ID = int(os.getenv("GUILD_ID", "0"))
+def env_int(name: str) -> int | None:
+  value = os.getenv(name)
+  try:
+    return int(value) if value else None
+  except ValueError:
+    return None
 
 def env_id_set(name: str) -> set[int]:
     raw = (os.getenv(name) or "").strip()
@@ -26,6 +30,9 @@ def env_id_set(name: str) -> set[int]:
             print(f"Ignoring invalid guild id in {name}: {part}")
     return ids
 
+TOKEN = os.getenv("DISCORD_TOKEN")
+GUILD_ID = env_int("GUILD_ID") or 0
+ENABLE_MEMBERS_INTENT = (os.getenv("ENABLE_MEMBERS_INTENT") or "true").lower() == "true"
 ALLOWED_GUILD_IDS = env_id_set("ALLOWED_GUILD_IDS")
 
 intents = discord.Intents.default()
@@ -205,6 +212,7 @@ class MagicConchView(View):
 
 async def enforce_allowlist():
     if not ALLOWED_GUILD_IDS:
+        print("No guilds are allowed; not enforcing allowlist")
         return
     for guild in list(client.guilds):
         if guild.id in ALLOWED_GUILD_IDS:
