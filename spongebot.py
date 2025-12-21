@@ -11,6 +11,23 @@ load_dotenv()
 TOKEN = os.getenv("DISCORD_TOKEN")
 GUILD_ID = int(os.getenv("GUILD_ID", "0"))
 
+def env_id_set(name: str) -> set[int]:
+    raw = (os.getenv(name) or "").strip()
+    ids: set[int] = set()
+    if not raw:
+        return ids
+    for part in raw.split(","):
+        part = part.strip()
+        if not part:
+            continue
+        try:
+            ids.add(int(part))
+        except ValueError:
+            print(f"Ignoring invalid guild id in {name}: {part}")
+    return ids
+
+ALLOWED_GUILD_IDS = env_id_set("ALLOWED_GUILD_IDS")
+
 intents = discord.Intents.default()
 client = discord.Client(intents=intents)
 tree = app_commands.CommandTree(client)
@@ -186,19 +203,49 @@ class MagicConchView(View):
     ):
         await interaction.response.edit_message(embed=self.build_embed(), view=self)
 
+async def enforce_allowlist():
+    if not ALLOWED_GUILD_IDS:
+        return
+    for guild in list(client.guilds):
+        if guild.id in ALLOWED_GUILD_IDS:
+            continue
+        print(f"Leaving unapproved guild: {guild.name} ({guild.id})")
+        try:
+            await guild.leave()
+        except discord.Forbidden:
+            print(f"No permission to leave {guild.id}")
+        except Exception as exc:
+            print(f"Error leaving {guild.id}: {exc}")
+
+
 @client.event
 async def on_ready():
-    # Sync commands to one guild for fast iteration
     if GUILD_ID:
         guild = discord.Object(id=GUILD_ID)
         tree.copy_global_to(guild=guild)
         await tree.sync(guild=guild)
-        print(f"Synced to guild {GUILD_ID}")
+        print(f"Synced commands to guild {GUILD_ID}")
     else:
         await tree.sync()
-        print("Synced globally")
+        print("Synced commands globally")
 
     print(f"Logged in as {client.user} (id={client.user.id})")
+    await enforce_allowlist()
+
+
+@client.event
+async def on_guild_join(guild: discord.Guild):
+    if not ALLOWED_GUILD_IDS:
+        return
+    if guild.id in ALLOWED_GUILD_IDS:
+        return
+    print(f"Joined unapproved guild, leaving: {guild.name} ({guild.id})")
+    try:
+        await guild.leave()
+    except discord.Forbidden:
+        print(f"No permission to leave {guild.id}")
+    except Exception as exc:
+        print(f"Error leaving {guild.id}: {exc}")
 
 @tree.command(name="spongebob", description="Send a SpongeBob-themed message")
 @app_commands.describe(

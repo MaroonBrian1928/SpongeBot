@@ -31,6 +31,8 @@ directly inside your server.
    - Copy `sample.env` to `.env`.
    - Fill in `DISCORD_TOKEN` (bot token) and optionally `GUILD_ID` for faster
      command syncing while testing.
+   - (Optional) Set `ALLOWED_GUILD_IDS` to a comma-separated list to enforce a
+     guild allowlist; the bot will leave any other servers it joins.
 3. **Populate content**
    - Edit `spongebob_content.json` if you want to add new quotes, GIFs, or
      trivia questions. Follow the existing structure.
