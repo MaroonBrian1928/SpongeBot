@@ -147,7 +147,7 @@ async def get_igdb_token() -> str:
     _igdb_token_expiry = datetime.now(timezone.utc) + timedelta(seconds=max(0, expires_in - 60))
     return _igdb_token
 
-async def igdb_search_game(query: str) -> dict | None:
+async def igdb_search_games(query: str, *, limit: int = 5) -> list[dict]:
     token = await get_igdb_token()
     headers = {
         "Client-ID": IGDB_CLIENT_ID or "",
@@ -156,17 +156,15 @@ async def igdb_search_game(query: str) -> dict | None:
     body = (
         f'search "{query}"; '
         "fields id,name,summary,cover.url,genres.name,first_release_date,"
-        "involved_companies.company.name,involved_companies.developer; "
-        "limit 1;"
+        "involved_companies.company.name,involved_companies.developer,websites.url,websites.category; "
+        f"limit {limit};"
     )
     async with aiohttp.ClientSession() as session:
         async with session.post("https://api.igdb.com/v4/games", data=body, headers=headers) as response:
             if response.status != 200:
                 raise RuntimeError(f"IGDB request failed ({response.status})")
             payload = await response.json()
-    if not payload:
-        return None
-    return payload[0]
+    return payload or []
 
 async def igdb_fetch_games(ids: list[int]) -> dict[int, dict]:
     if not ids:
@@ -178,7 +176,8 @@ async def igdb_fetch_games(ids: list[int]) -> dict[int, dict]:
     }
     id_list = ",".join(str(game_id) for game_id in ids)
     body = (
-        "fields id,name,summary,cover.url,genres.name; "
+        "fields id,name,summary,cover.url,genres.name,first_release_date,"
+        "involved_companies.company.name,involved_companies.developer,websites.url,websites.category; "
         f"where id = ({id_list}); limit {len(ids)};"
     )
     async with aiohttp.ClientSession() as session:
@@ -190,12 +189,93 @@ async def igdb_fetch_games(ids: list[int]) -> dict[int, dict]:
         return {}
     return {int(item.get("id")): item for item in payload if item.get("id")}
 
+async def igdb_fetch_cover_url(cover_id: int) -> str | None:
+    token = await get_igdb_token()
+    headers = {
+        "Client-ID": IGDB_CLIENT_ID or "",
+        "Authorization": f"Bearer {token}",
+    }
+    body = f"fields url; where id = {cover_id}; limit 1;"
+    async with aiohttp.ClientSession() as session:
+        async with session.post("https://api.igdb.com/v4/covers", data=body, headers=headers) as response:
+            if response.status != 200:
+                raise RuntimeError(f"IGDB request failed ({response.status})")
+            payload = await response.json()
+    if not payload:
+        return None
+    return payload[0].get("url")
+
+async def ensure_cover_url(data: dict) -> dict:
+    cover = data.get("cover")
+    if isinstance(cover, dict) and cover.get("url"):
+        return data
+    if isinstance(cover, int):
+        cover_url = await igdb_fetch_cover_url(cover)
+        if cover_url:
+            updated = dict(data)
+            updated["cover"] = {"url": cover_url}
+            return updated
+    return data
+
 def normalize_cover_url(cover_url: str | None) -> str | None:
     if not cover_url:
         return None
     if cover_url.startswith("//"):
         cover_url = f"https:{cover_url}"
     return cover_url.replace("t_thumb", "t_cover_big")
+
+def extract_steam_url(websites: list[dict] | None) -> str | None:
+    if not websites:
+        return None
+    for site in websites:
+        if not isinstance(site, dict):
+            continue
+        if site.get("category") == 13 and site.get("url"):
+            return site.get("url")
+    return None
+
+def build_game_embed(data: dict) -> tuple[discord.Embed, str]:
+    game_title = data.get("name") or "Unknown title"
+
+    release_date = "Unknown"
+    release_ts = data.get("first_release_date")
+    if isinstance(release_ts, int):
+        release_date = datetime.fromtimestamp(release_ts, tz=timezone.utc).strftime("%Y-%m-%d")
+
+    genres = data.get("genres") or []
+    genre_names = [genre.get("name") for genre in genres if isinstance(genre, dict) and genre.get("name")]
+    genre_text = ", ".join(genre_names) if genre_names else "Unknown"
+
+    developers = []
+    involved = data.get("involved_companies") or []
+    for entry in involved:
+        if not isinstance(entry, dict) or not entry.get("developer"):
+            continue
+        company = entry.get("company") or {}
+        name = company.get("name") if isinstance(company, dict) else None
+        if name:
+            developers.append(name)
+    developer_text = ", ".join(developers) if developers else "Unknown"
+
+    cover_url = None
+    cover = data.get("cover") or {}
+    if isinstance(cover, dict):
+        cover_url = cover.get("url")
+    cover_url = normalize_cover_url(cover_url)
+
+    summary = data.get("summary") or ""
+    short_summary = summary.strip()
+    if len(short_summary) > 200:
+        short_summary = f"{short_summary[:197]}..."
+
+    steam_url = extract_steam_url(data.get("websites") if isinstance(data, dict) else None)
+    embed = discord.Embed(title=game_title, description=short_summary or None, url=steam_url or None)
+    embed.add_field(name="Genre", value=genre_text, inline=True)
+    embed.add_field(name="Developer", value=developer_text, inline=True)
+    embed.add_field(name="Release date", value=release_date, inline=True)
+    if cover_url:
+        embed.set_image(url=cover_url)
+    return embed, game_title
 
 def mock_text(value: str) -> str:
     mocked = []
@@ -355,7 +435,14 @@ class ConfirmGameView(discord.ui.View):
         if any(item.get("igdb_id") == self.game_id for item in items):
             message = f"`{self.game_title}` is already in the wishlist."
         else:
-            items.append({"title": self.game_title, "igdb_id": self.game_id})
+            items.append({
+                "title": self.game_title,
+                "igdb_id": self.game_id,
+                "suggested_by": {
+                    "id": interaction.user.id,
+                    "name": interaction.user.name,
+                },
+            })
             save_wishlist(items)
             message = f"Added `{self.game_title}` to the wishlist."
 
@@ -427,6 +514,61 @@ class RemoveWishlistView(discord.ui.View):
     async def on_timeout(self) -> None:
         for child in self.children:
             if isinstance(child, discord.ui.Button):
+                child.disabled = True
+        if self.message:
+            await self.message.edit(view=self)
+
+class SuggestPickSelect(discord.ui.Select):
+    def __init__(self, view_ref: "SuggestPickView", options: list[dict]):
+        self.view_ref = view_ref
+        select_options = []
+        for entry in options:
+            game_id = entry.get("id")
+            label = (entry.get("name") or "Unknown title").strip()
+            release_ts = entry.get("first_release_date")
+            if isinstance(release_ts, int):
+                year = datetime.fromtimestamp(release_ts, tz=timezone.utc).year
+                label = f"{label} - ({year})"
+            if len(label) > 100:
+                label = f"{label[:97]}..."
+            if not game_id:
+                continue
+            select_options.append(discord.SelectOption(label=label, value=str(game_id)))
+        super().__init__(placeholder="Choose a game", options=select_options)
+
+    async def callback(self, interaction: discord.Interaction):
+        if interaction.user.id != self.view_ref.author_id:
+            await interaction.response.send_message("Only the requester can use this menu.", ephemeral=True)
+            return
+        await self.view_ref.handle_selection(interaction, int(self.values[0]))
+
+class SuggestPickView(discord.ui.View):
+    def __init__(self, author_id: int, options: list[dict]):
+        super().__init__(timeout=60)
+        self.author_id = author_id
+        self.options = {int(entry["id"]): entry for entry in options if entry.get("id")}
+        self.message: discord.Message | None = None
+        self.add_item(SuggestPickSelect(self, options))
+
+    async def handle_selection(self, interaction: discord.Interaction, game_id: int):
+        try:
+            details = await igdb_fetch_games([game_id])
+        except RuntimeError as exc:
+            await interaction.response.send_message(f"IGDB lookup failed: {exc}", ephemeral=True)
+            return
+        data = details.get(game_id) or self.options.get(game_id) or {}
+        try:
+            data = await ensure_cover_url(data)
+        except RuntimeError:
+            pass
+        embed, game_title = build_game_embed(data)
+        view = ConfirmGameView(interaction.user.id, game_id, game_title)
+        await interaction.response.edit_message(content="Is this the correct game?", embed=embed, view=view)
+        view.message = interaction.message
+
+    async def on_timeout(self) -> None:
+        for child in self.children:
+            if isinstance(child, discord.ui.Select):
                 child.disabled = True
         if self.message:
             await self.message.edit(view=self)
@@ -571,59 +713,40 @@ async def suggest(interaction: discord.Interaction, game: str):
         return
 
     try:
-        result = await igdb_search_game(game)
+        results = await igdb_search_games(game, limit=10)
     except RuntimeError as exc:
         await interaction.followup.send(f"IGDB lookup failed: {exc}", ephemeral=True)
         return
 
-    if not result:
+    if not results:
         await interaction.followup.send(f"No results found for `{game}`.", ephemeral=True)
         return
+    if len(results) > 1:
+        view = SuggestPickView(interaction.user.id, results[:10])
+        message = await interaction.followup.send(
+            content="Multiple results found. Pick the correct game.",
+            view=view,
+            ephemeral=True,
+        )
+        view.message = message
+        return
 
-    game_title = result.get("name") or "Unknown title"
+    result = results[0]
     game_id = result.get("id")
     if not game_id:
         await interaction.followup.send("IGDB returned an unexpected response; try again.", ephemeral=True)
         return
-
-    release_date = "Unknown"
-    release_ts = result.get("first_release_date")
-    if isinstance(release_ts, int):
-        release_date = datetime.fromtimestamp(release_ts, tz=timezone.utc).strftime("%Y-%m-%d")
-
-    genres = result.get("genres") or []
-    genre_names = [genre.get("name") for genre in genres if isinstance(genre, dict) and genre.get("name")]
-    genre_text = ", ".join(genre_names) if genre_names else "Unknown"
-
-    developers = []
-    involved = result.get("involved_companies") or []
-    for entry in involved:
-        if not isinstance(entry, dict) or not entry.get("developer"):
-            continue
-        company = entry.get("company") or {}
-        name = company.get("name") if isinstance(company, dict) else None
-        if name:
-            developers.append(name)
-    developer_text = ", ".join(developers) if developers else "Unknown"
-
-    cover_url = None
-    cover = result.get("cover") or {}
-    if isinstance(cover, dict):
-        cover_url = cover.get("url")
-    cover_url = normalize_cover_url(cover_url)
-
-    summary = result.get("summary") or ""
-    short_summary = summary.strip()
-    if len(short_summary) > 200:
-        short_summary = f"{short_summary[:197]}..."
-
-    embed = discord.Embed(title=game_title, description=short_summary or None)
-    embed.add_field(name="Genre", value=genre_text, inline=True)
-    embed.add_field(name="Developer", value=developer_text, inline=True)
-    embed.add_field(name="Release date", value=release_date, inline=True)
-    if cover_url:
-        embed.set_image(url=cover_url)
-
+    try:
+        details = await igdb_fetch_games([int(game_id)])
+    except RuntimeError as exc:
+        await interaction.followup.send(f"IGDB lookup failed: {exc}", ephemeral=True)
+        return
+    data = details.get(int(game_id)) or result
+    try:
+        data = await ensure_cover_url(data)
+    except RuntimeError:
+        pass
+    embed, game_title = build_game_embed(data)
     view = ConfirmGameView(interaction.user.id, int(game_id), game_title)
     message = await interaction.followup.send(
         content="Is this the correct game?",
@@ -667,6 +790,10 @@ async def review_wishlist(interaction: discord.Interaction, *, ephemeral: bool):
         igdb_id = item.get("igdb_id")
         data = results.get(int(igdb_id)) if igdb_id else None
         title = (data.get("name") if data else None) or item.get("title") or "Unknown title"
+        suggested_by = item.get("suggested_by") or {}
+        suggester_id = suggested_by.get("id")
+        suggester_name = suggested_by.get("name")
+        suggested_text = f"<@{suggester_id}>" if suggester_id else (suggester_name or "Unknown")
 
         genres = data.get("genres") if isinstance(data, dict) else None
         genre_names = [genre.get("name") for genre in (genres or []) if isinstance(genre, dict) and genre.get("name")]
@@ -684,8 +811,10 @@ async def review_wishlist(interaction: discord.Interaction, *, ephemeral: bool):
         if len(short_summary) > 200:
             short_summary = f"{short_summary[:197]}..."
 
-        embed = discord.Embed(title=title, description=short_summary or None)
+        steam_url = extract_steam_url(data.get("websites") if isinstance(data, dict) else None)
+        embed = discord.Embed(title=title, description=short_summary or None, url=steam_url or None)
         embed.add_field(name="Genre", value=genre_text, inline=True)
+        embed.add_field(name="Suggested by", value=suggested_text, inline=True)
         if cover_url:
             embed.set_image(url=cover_url)
         embeds.append(embed)
