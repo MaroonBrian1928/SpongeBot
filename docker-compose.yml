@@ -4,6 +4,8 @@ services:
     container_name: spongebot
     env_file:
       - .env
+    volumes:
+      - ./wishlist.json:/app/wishlist.json
     restart: unless-stopped
     # optional: keep logs bounded
     logging:

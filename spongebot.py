@@ -1,6 +1,10 @@
 import json
 import os
 import random
+from datetime import datetime, timedelta, timezone
+from pathlib import Path
+
+import aiohttp
 import discord
 from discord import app_commands
 from discord.ui import View, Button
@@ -34,16 +38,53 @@ TOKEN = os.getenv("DISCORD_TOKEN")
 GUILD_ID = env_int("GUILD_ID") or 0
 ENABLE_MEMBERS_INTENT = (os.getenv("ENABLE_MEMBERS_INTENT") or "true").lower() == "true"
 ALLOWED_GUILD_IDS = env_id_set("ALLOWED_GUILD_IDS")
+IGDB_CLIENT_ID = os.getenv("IGDB_CLIENT_ID")
+IGDB_CLIENT_SECRET = os.getenv("IGDB_CLIENT_SECRET")
+WISHLIST_ADMIN_ROLE_IDS = env_id_set("WISHLIST_ADMIN_ROLE_IDS")
 
 intents = discord.Intents.default()
 client = discord.Client(intents=intents)
 tree = app_commands.CommandTree(client)
+
+def wishlist_role_check():
+    async def predicate(interaction: discord.Interaction) -> bool:
+        if not WISHLIST_ADMIN_ROLE_IDS:
+            return False
+        if not interaction.guild:
+            return False
+        member = interaction.user
+        if not isinstance(member, discord.Member):
+            return False
+        return any(role.id in WISHLIST_ADMIN_ROLE_IDS for role in member.roles)
+    return app_commands.check(predicate)
 
 def load_data():
     with open("spongebob_content.json", "r", encoding="utf-8") as f:
         return json.load(f)
 
 DATA = load_data()
+_igdb_token: str | None = None
+_igdb_token_expiry: datetime | None = None
+
+def wishlist_path() -> Path:
+    return Path(__file__).with_name("wishlist.json")
+
+def load_wishlist() -> list[dict]:
+    path = wishlist_path()
+    if not path.exists():
+        return []
+    with path.open("r", encoding="utf-8") as f:
+        try:
+            data = json.load(f)
+        except json.JSONDecodeError:
+            return []
+    return data if isinstance(data, list) else []
+
+def save_wishlist(items: list[dict]) -> None:
+    path = wishlist_path()
+    with path.open("w", encoding="utf-8") as f:
+        json.dump(items, f, indent=2)
+        f.write("\n")
 
 def pick_quote() -> str:
     return random.choice(DATA["quotes"])
@@ -78,6 +119,83 @@ def pick_magic_conch_gif() -> str:
 def pick_magic_conch_response() -> str:
     responses = DATA.get("magic_conch_responses") or []
     return random.choice(responses)
+
+async def get_igdb_token() -> str:
+    global _igdb_token, _igdb_token_expiry
+    if _igdb_token and _igdb_token_expiry and _igdb_token_expiry > datetime.now(timezone.utc):
+        return _igdb_token
+
+    if not IGDB_CLIENT_ID or not IGDB_CLIENT_SECRET:
+        raise RuntimeError("Missing IGDB credentials")
+
+    url = "https://id.twitch.tv/oauth2/token"
+    params = {
+        "client_id": IGDB_CLIENT_ID,
+        "client_secret": IGDB_CLIENT_SECRET,
+        "grant_type": "client_credentials",
+    }
+    async with aiohttp.ClientSession() as session:
+        async with session.post(url, params=params) as response:
+            if response.status != 200:
+                raise RuntimeError(f"IGDB auth failed ({response.status})")
+            payload = await response.json()
+    access_token = payload.get("access_token")
+    expires_in = payload.get("expires_in", 0)
+    if not access_token:
+        raise RuntimeError("IGDB auth response missing access_token")
+    _igdb_token = access_token
+    _igdb_token_expiry = datetime.now(timezone.utc) + timedelta(seconds=max(0, expires_in - 60))
+    return _igdb_token
+
+async def igdb_search_game(query: str) -> dict | None:
+    token = await get_igdb_token()
+    headers = {
+        "Client-ID": IGDB_CLIENT_ID or "",
+        "Authorization": f"Bearer {token}",
+    }
+    body = (
+        f'search "{query}"; '
+        "fields id,name,summary,cover.url,genres.name,first_release_date,"
+        "involved_companies.company.name,involved_companies.developer; "
+        "limit 1;"
+    )
+    async with aiohttp.ClientSession() as session:
+        async with session.post("https://api.igdb.com/v4/games", data=body, headers=headers) as response:
+            if response.status != 200:
+                raise RuntimeError(f"IGDB request failed ({response.status})")
+            payload = await response.json()
+    if not payload:
+        return None
+    return payload[0]
+
+async def igdb_fetch_games(ids: list[int]) -> dict[int, dict]:
+    if not ids:
+        return {}
+    token = await get_igdb_token()
+    headers = {
+        "Client-ID": IGDB_CLIENT_ID or "",
+        "Authorization": f"Bearer {token}",
+    }
+    id_list = ",".join(str(game_id) for game_id in ids)
+    body = (
+        "fields id,name,summary,cover.url,genres.name; "
+        f"where id = ({id_list}); limit {len(ids)};"
+    )
+    async with aiohttp.ClientSession() as session:
+        async with session.post("https://api.igdb.com/v4/games", data=body, headers=headers) as response:
+            if response.status != 200:
+                raise RuntimeError(f"IGDB request failed ({response.status})")
+            payload = await response.json()
+    if not payload:
+        return {}
+    return {int(item.get("id")): item for item in payload if item.get("id")}
+
+def normalize_cover_url(cover_url: str | None) -> str | None:
+    if not cover_url:
+        return None
+    if cover_url.startswith("//"):
+        cover_url = f"https:{cover_url}"
+    return cover_url.replace("t_thumb", "t_cover_big")
 
 def mock_text(value: str) -> str:
     mocked = []
@@ -210,6 +328,109 @@ class MagicConchView(View):
     ):
         await interaction.response.edit_message(embed=self.build_embed(), view=self)
 
+class ConfirmGameView(discord.ui.View):
+    def __init__(self, author_id: int, game_id: int, game_title: str):
+        super().__init__(timeout=60)
+        self.author_id = author_id
+        self.game_id = game_id
+        self.game_title = game_title
+        self.message: discord.Message | None = None
+
+    async def interaction_check(self, interaction: discord.Interaction) -> bool:
+        if interaction.user.id != self.author_id:
+            await interaction.response.send_message("Only the requester can use these buttons.", ephemeral=True)
+            return False
+        return True
+
+    async def on_timeout(self) -> None:
+        for child in self.children:
+            if isinstance(child, discord.ui.Button):
+                child.disabled = True
+        if self.message:
+            await self.message.edit(view=self)
+
+    @discord.ui.button(label="Yes", style=discord.ButtonStyle.success)
+    async def confirm(self, interaction: discord.Interaction, button: discord.ui.Button):
+        items = load_wishlist()
+        if any(item.get("igdb_id") == self.game_id for item in items):
+            message = f"`{self.game_title}` is already in the wishlist."
+        else:
+            items.append({"title": self.game_title, "igdb_id": self.game_id})
+            save_wishlist(items)
+            message = f"Added `{self.game_title}` to the wishlist."
+
+        for child in self.children:
+            if isinstance(child, discord.ui.Button):
+                child.disabled = True
+        embed = interaction.message.embeds[0] if interaction.message and interaction.message.embeds else None
+        await interaction.response.edit_message(content=message, embed=embed, view=self)
+        if message.startswith("Added"):
+            public_message = f"{interaction.user.mention} {message}"
+            try:
+                await interaction.followup.send(content=public_message, embed=embed, ephemeral=False)
+            except discord.Forbidden:
+                if interaction.channel:
+                    await interaction.channel.send(content=public_message, embed=embed)
+
+    @discord.ui.button(label="No", style=discord.ButtonStyle.secondary)
+    async def cancel(self, interaction: discord.Interaction, button: discord.ui.Button):
+        for child in self.children:
+            if isinstance(child, discord.ui.Button):
+                child.disabled = True
+        embed = interaction.message.embeds[0] if interaction.message and interaction.message.embeds else None
+        await interaction.response.edit_message(content="Got it. Not adding that one.", embed=embed, view=self)
+
+class RemoveWishlistButton(discord.ui.Button):
+    def __init__(self, igdb_id: int, title: str):
+        label = title.strip() if title else "Unknown title"
+        if len(label) > 80:
+            label = f"{label[:77]}..."
+        super().__init__(label=label, style=discord.ButtonStyle.secondary)
+        self.igdb_id = igdb_id
+        self.title = title or "Unknown title"
+
+    async def callback(self, interaction: discord.Interaction):
+        view = self.view
+        if not isinstance(view, RemoveWishlistView):
+            await interaction.response.send_message("Something went wrong; please try again.", ephemeral=True)
+            return
+        if interaction.user.id != view.author_id:
+            await interaction.response.send_message("Only the requester can use these buttons.", ephemeral=True)
+            return
+
+        items = load_wishlist()
+        if not any(item.get("igdb_id") == self.igdb_id for item in items):
+            self.disabled = True
+            await interaction.response.edit_message(content="That entry was already removed.", view=view)
+            return
+
+        items = [item for item in items if item.get("igdb_id") != self.igdb_id]
+        save_wishlist(items)
+        self.disabled = True
+        await interaction.response.edit_message(
+            content=f"Removed `{self.title}` from the wishlist.",
+            view=view,
+        )
+
+class RemoveWishlistView(discord.ui.View):
+    def __init__(self, author_id: int, entries: list[dict]):
+        super().__init__(timeout=120)
+        self.author_id = author_id
+        self.message: discord.Message | None = None
+        for entry in entries:
+            igdb_id = entry.get("igdb_id")
+            if not igdb_id:
+                continue
+            title = entry.get("title") or "Unknown title"
+            self.add_item(RemoveWishlistButton(int(igdb_id), title))
+
+    async def on_timeout(self) -> None:
+        for child in self.children:
+            if isinstance(child, discord.ui.Button):
+                child.disabled = True
+        if self.message:
+            await self.message.edit(view=self)
+
 async def enforce_allowlist():
     if not ALLOWED_GUILD_IDS:
         print("No guilds are allowed; not enforcing allowlist")
@@ -339,6 +560,168 @@ async def mocktext(interaction: discord.Interaction, text: str):
 @app_commands.describe(text="The text you want to wumbo")
 async def wumbo(interaction: discord.Interaction, text: str):
     await interaction.response.send_message(wumbo_text(text))
+
+@tree.command(name="suggest", description="Suggest a game for the wishlist")
+@app_commands.describe(game="Name of the game to look up")
+async def suggest(interaction: discord.Interaction, game: str):
+    await interaction.response.defer(ephemeral=True, thinking=True)
+
+    if not IGDB_CLIENT_ID or not IGDB_CLIENT_SECRET:
+        await interaction.followup.send("IGDB is not configured yet. Set IGDB_CLIENT_ID/IGDB_CLIENT_SECRET.", ephemeral=True)
+        return
+
+    try:
+        result = await igdb_search_game(game)
+    except RuntimeError as exc:
+        await interaction.followup.send(f"IGDB lookup failed: {exc}", ephemeral=True)
+        return
+
+    if not result:
+        await interaction.followup.send(f"No results found for `{game}`.", ephemeral=True)
+        return
+
+    game_title = result.get("name") or "Unknown title"
+    game_id = result.get("id")
+    if not game_id:
+        await interaction.followup.send("IGDB returned an unexpected response; try again.", ephemeral=True)
+        return
+
+    release_date = "Unknown"
+    release_ts = result.get("first_release_date")
+    if isinstance(release_ts, int):
+        release_date = datetime.fromtimestamp(release_ts, tz=timezone.utc).strftime("%Y-%m-%d")
+
+    genres = result.get("genres") or []
+    genre_names = [genre.get("name") for genre in genres if isinstance(genre, dict) and genre.get("name")]
+    genre_text = ", ".join(genre_names) if genre_names else "Unknown"
+
+    developers = []
+    involved = result.get("involved_companies") or []
+    for entry in involved:
+        if not isinstance(entry, dict) or not entry.get("developer"):
+            continue
+        company = entry.get("company") or {}
+        name = company.get("name") if isinstance(company, dict) else None
+        if name:
+            developers.append(name)
+    developer_text = ", ".join(developers) if developers else "Unknown"
+
+    cover_url = None
+    cover = result.get("cover") or {}
+    if isinstance(cover, dict):
+        cover_url = cover.get("url")
+    cover_url = normalize_cover_url(cover_url)
+
+    summary = result.get("summary") or ""
+    short_summary = summary.strip()
+    if len(short_summary) > 200:
+        short_summary = f"{short_summary[:197]}..."
+
+    embed = discord.Embed(title=game_title, description=short_summary or None)
+    embed.add_field(name="Genre", value=genre_text, inline=True)
+    embed.add_field(name="Developer", value=developer_text, inline=True)
+    embed.add_field(name="Release date", value=release_date, inline=True)
+    if cover_url:
+        embed.set_image(url=cover_url)
+
+    view = ConfirmGameView(interaction.user.id, int(game_id), game_title)
+    message = await interaction.followup.send(
+        content="Is this the correct game?",
+        embed=embed,
+        view=view,
+        ephemeral=True,
+    )
+    view.message = message
+
+review_group = app_commands.Group(name="reviewwishlist", description="Review the wishlist entries")
+
+@review_group.command(name="public", description="Show the wishlist to everyone")
+async def review_wishlist_public(interaction: discord.Interaction):
+    await review_wishlist(interaction, ephemeral=False)
+
+@review_group.command(name="private", description="Show the wishlist only to you")
+async def review_wishlist_private(interaction: discord.Interaction):
+    await review_wishlist(interaction, ephemeral=True)
+
+async def review_wishlist(interaction: discord.Interaction, *, ephemeral: bool):
+    await interaction.response.defer(ephemeral=ephemeral, thinking=True)
+
+    items = load_wishlist()
+    if not items:
+        await interaction.followup.send("The wishlist is empty.", ephemeral=ephemeral)
+        return
+
+    if not IGDB_CLIENT_ID or not IGDB_CLIENT_SECRET:
+        await interaction.followup.send("IGDB is not configured yet. Set IGDB_CLIENT_ID/IGDB_CLIENT_SECRET.", ephemeral=ephemeral)
+        return
+
+    ids = [int(item.get("igdb_id")) for item in items if item.get("igdb_id")]
+    try:
+        results = await igdb_fetch_games(ids)
+    except RuntimeError as exc:
+        await interaction.followup.send(f"IGDB lookup failed: {exc}", ephemeral=ephemeral)
+        return
+
+    embeds: list[discord.Embed] = []
+    for item in items:
+        igdb_id = item.get("igdb_id")
+        data = results.get(int(igdb_id)) if igdb_id else None
+        title = (data.get("name") if data else None) or item.get("title") or "Unknown title"
+
+        genres = data.get("genres") if isinstance(data, dict) else None
+        genre_names = [genre.get("name") for genre in (genres or []) if isinstance(genre, dict) and genre.get("name")]
+        genre_text = ", ".join(genre_names) if genre_names else "Unknown"
+
+        cover_url = None
+        if isinstance(data, dict):
+            cover = data.get("cover") or {}
+            if isinstance(cover, dict):
+                cover_url = cover.get("url")
+        cover_url = normalize_cover_url(cover_url)
+
+        summary = data.get("summary") if isinstance(data, dict) else ""
+        short_summary = (summary or "").strip()
+        if len(short_summary) > 200:
+            short_summary = f"{short_summary[:197]}..."
+
+        embed = discord.Embed(title=title, description=short_summary or None)
+        embed.add_field(name="Genre", value=genre_text, inline=True)
+        if cover_url:
+            embed.set_image(url=cover_url)
+        embeds.append(embed)
+
+    for i in range(0, len(embeds), 10):
+        chunk = embeds[i:i + 10]
+        await interaction.followup.send(embeds=chunk, ephemeral=ephemeral)
+
+tree.add_command(review_group)
+
+@tree.command(name="removewishlist", description="Remove entries from the wishlist")
+@wishlist_role_check()
+async def removewishlist(interaction: discord.Interaction):
+    await interaction.response.defer(ephemeral=True, thinking=True)
+    items = load_wishlist()
+    if not items:
+        await interaction.followup.send("The wishlist is empty.", ephemeral=True)
+        return
+
+    chunk_size = 25
+    for index in range(0, len(items), chunk_size):
+        chunk = items[index:index + chunk_size]
+        view = RemoveWishlistView(interaction.user.id, chunk)
+        message = await interaction.followup.send(
+            content="Select a game to remove.",
+            view=view,
+            ephemeral=True,
+        )
+        view.message = message
+
+@removewishlist.error
+async def removewishlist_error(interaction: discord.Interaction, error: app_commands.AppCommandError):
+    if isinstance(error, app_commands.CheckFailure):
+        await interaction.response.send_message("You do not have permission to use this command.", ephemeral=True)
+        return
+    await interaction.response.send_message("Something went wrong; please try again.", ephemeral=True)
 
 if not TOKEN:
     raise SystemExit("Missing DISCORD_TOKEN in .env")

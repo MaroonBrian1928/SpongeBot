@@ -17,6 +17,9 @@ directly inside your server.
 - **Magic Conch & Text Commands** – Ask the Magic Conch for advice (with an
   “Ask Again” button) or use the dedicated `/mocktext` and `/wumbo` commands to
   transform text.
+- **Game Wishlist** – Use `/suggest` to confirm games via IGDB, `/reviewwishlist`
+  to browse the list publicly or privately, and `/removewishlist` to prune items
+  (role-restricted).
 - **JSON-driven content** – All quotes, memes, and trivia questions live in
   `spongebob_content.json`, making it simple to add or edit material without
   touching Python code.
@@ -33,6 +36,9 @@ directly inside your server.
      command syncing while testing.
    - (Optional) Set `ALLOWED_GUILD_IDS` to a comma-separated list to enforce a
      guild allowlist; the bot will leave any other servers it joins.
+   - Set `IGDB_CLIENT_ID` and `IGDB_CLIENT_SECRET` for game lookups via `/suggest`.
+   - Set `WISHLIST_ADMIN_ROLE_IDS` to a comma-separated list of role IDs allowed
+     to use `/removewishlist`.
 3. **Populate content**
    - Edit `spongebob_content.json` if you want to add new quotes, GIFs, or
      trivia questions. Follow the existing structure.
@@ -57,6 +63,7 @@ Or use docker compose with the provided `docker-compose.yml`:
 ```bash
 docker compose up -d --build
 ```
+The `wishlist.json` file is mounted so wishlist entries persist between restarts.
 
 ## Usage
 
