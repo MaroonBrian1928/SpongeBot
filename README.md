@@ -26,11 +26,15 @@ directly inside your server.
 
 ## Getting Started
 
-1. **Install dependencies**
+1. **Install `uv`**
    ```bash
-   pip install -r requirements.txt
+   curl -LsSf https://astral.sh/uv/install.sh | sh
    ```
-2. **Configure environment**
+2. **Install dependencies**
+   ```bash
+   uv sync
+   ```
+3. **Configure environment**
    - Copy `sample.env` to `.env`.
    - Fill in `DISCORD_TOKEN` (bot token) and optionally `GUILD_ID` for faster
      command syncing while testing.
@@ -39,12 +43,12 @@ directly inside your server.
    - Set `IGDB_CLIENT_ID` and `IGDB_CLIENT_SECRET` for game lookups via `/suggest`.
    - Set `WISHLIST_ADMIN_ROLE_IDS` to a comma-separated list of role IDs allowed
      to use `/removewishlist`.
-3. **Populate content**
+4. **Populate content**
    - Edit `spongebob_content.json` if you want to add new quotes, GIFs, or
      trivia questions. Follow the existing structure.
-4. **Run the bot**
+5. **Run the bot**
    ```bash
-   python spongebot.py
+   uv run spongebot.py
    ```
    The bot logs into Discord, syncs the `/spongebob` command, and listens for
    requests.
@@ -64,6 +68,9 @@ Or use docker compose with the provided `docker-compose.yml`:
 docker compose up -d --build
 ```
 The `wishlist.json` file is mounted so wishlist entries persist between restarts.
+The image runs as a non-root user and installs dependencies from
+`pyproject.toml` via `uv sync` before copying `spongebot.py` and
+`spongebob_content.json`.
 
 ## Usage
 
